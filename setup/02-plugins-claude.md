@@ -32,6 +32,10 @@ Cobre os três tipos de desperdício: estrutural (CLAUDE.md inchado, skills mort
 ```
 Deve retornar algo como: `Context fill: 4%  Quality: S (94)`
 
+O plugin não cobre Grok. O adapter é `bash install.sh --grok`, beta, e não
+devolve `/token-optimizer` nem checkpoint na abertura. Passos e limites:
+`setup/08-multi-agente.md`.
+
 ---
 
 ## Context Mode

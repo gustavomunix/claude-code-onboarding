@@ -1,6 +1,8 @@
 # Sequência de Sessão — Uso Diário
 
-Referência de comandos para cada momento da sessão.
+Referência de comandos para cada momento da sessão no Claude Code.
+Cursor, Codex e Grok não têm `/token-optimizer` nem `/caveman full` do plugin.
+A abertura desses agentes está em `setup/08-multi-agente.md`.
 
 ---
 

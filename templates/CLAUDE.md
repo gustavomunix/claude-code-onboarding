@@ -56,6 +56,7 @@ src/
 
 ## ▸ CONVENÇÕES
 
+- Comentário no código é público. Não adicionar comentário novo, qualquer autor ou agente, a menos que o pedido peça. Comentário que já existe fica.
 - [Nomes: ex. camelCase funções, PascalCase componentes]
 - [Testes: ex. `__tests__/` ou `.test.ts` ao lado do arquivo]
 - [Imports: ex. absolutos via `@/`]
@@ -96,7 +97,7 @@ ctx_execute("python", `
 `)
 ```
 
-**RTK** — filtra output de terminal automaticamente. Para testes, sempre pedir:
+**RTK** — filtra output de terminal quando o agente tem hook (Claude, Cursor, Codex no RTK 0.51+). Sem hook, o filtro não dispara. Grok não tem esse hook. Para testes, sempre pedir:
 ```
 Run [comando]. Show failures only.
 ```

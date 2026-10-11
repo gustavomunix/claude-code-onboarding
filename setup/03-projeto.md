@@ -6,17 +6,45 @@ Setup específico por projeto. Rodar uma vez na raiz de cada repositório novo.
 
 ## code-review-graph — configurar no projeto
 
+Claude Code:
+
 ```bash
 # Na raiz do projeto (onde está o .git):
 code-review-graph install --platform claude-code
 code-review-graph build
 ```
 
-O que acontece:
+O que acontece no Claude:
 - Cria `.mcp.json` com o servidor MCP local
 - Cria `CLAUDE.md` com instruções de uso do grafo
 - Cria `.claude/skills/` com slash commands de revisão
 - Adiciona `.code-review-graph/` ao `.gitignore`
+
+Cursor (code-review-graph 2.3.9, já instalado via pipx nesta máquina):
+
+```bash
+pip install -U code-review-graph
+code-review-graph install --platform cursor
+code-review-graph build
+```
+
+No Cursor isso grava só `.cursor/mcp.json`. Sem skill, sem hook, sem
+pre-commit. O grafo é o mesmo: Tree-sitter → SQLite → o agente pergunta o
+blast radius pelo MCP e lê só esses arquivos. Como ninguém reindexa no save,
+rode `code-review-graph update` ou deixe `code-review-graph watch` aberto.
+Reinicie o Cursor depois do install. Detalhe em `setup/08-multi-agente.md`.
+
+Outras flags do 2.3.9: `codex`, `windsurf`, `zed`, `continue`, `opencode`,
+`antigravity`, `gemini-cli`, `qwen`, `kiro`, `qoder`, `copilot`,
+`copilot-cli`, `codebuddy`, `hermes`. Não há `grok`. O Grok importa o
+`.mcp.json` do install Claude. Pre-commit só em Codex, Claude Code e Qoder.
+
+Desinstalar remove só arquivo do CRG:
+
+```bash
+code-review-graph uninstall --dry-run
+code-review-graph uninstall --keep-user-configs --repo .
+```
 
 No chat, confirme a construção:
 ```

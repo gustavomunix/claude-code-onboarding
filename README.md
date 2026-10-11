@@ -1,7 +1,11 @@
-# Claude Code — Onboarding de Projeto Novo
+# Onboarding de projeto — Claude Code e outros agentes
 
 Setup completo para o início de qualquer projeto com Claude Code.
 Cobre ferramentas de otimização de tokens, CLAUDE.md otimizado, recursos avançados e higiene de contexto.
+
+Cursor, Codex e Grok usam o mesmo stack só onde o upstream tem hook ou MCP.
+O mapa está em `setup/08-multi-agente.md`. Headroom e JFrog Boost ficam de fora:
+os dois comprimem a mesma saída de terminal que o RTK.
 
 ---
 
@@ -23,6 +27,7 @@ Read setup/03-projeto.md and configure this project.
 
 ```
 README.md
+AGENTS.md                    ← regras curtas para Grok, Codex e Cursor
 setup/
   00-checklist.md            ← ponto de entrada — checklist que o Claude segue
   01-ferramentas-globais.md  ← RTK + Caveman + code-review-graph
@@ -31,6 +36,8 @@ setup/
   04-sessao.md               ← sequência de abertura e comandos de controle
   05-recursos-avancados.md   ← Plan Mode, Auto Plan Mode, Rewind, CLAUDE.md Supremacy
   06-higiene-contexto.md     ← context poisoning, /context, sanity check, A.B.E
+  07-estilo-codigo.md        ← atribuição em commits/PRs e bloqueio de comentários novos
+  08-multi-agente.md         ← quem cobre o quê em Cursor, Codex e Grok
 templates/
   CLAUDE.md                  ← template base para qualquer projeto
   auto-plan-mode.txt         ← system prompt para Auto Plan Mode
@@ -51,7 +58,9 @@ templates/
 | **Context Mode** | Sandbox para dados brutos — APIs, logs, snapshots | 94–99% por chamada |
 | **Token Optimizer** | Audit estrutural + compactação com checkpoint | até 80%+ sessão |
 
-Sessão de 2h que custaria ~$12 → ~$2–3 com o stack completo.
+Sessão de 2h que custaria ~$12 → ~$2–3 com o stack completo no Claude.
+Nos outros agentes a cobertura é a da matriz em `setup/08-multi-agente.md`.
+No Grok o Token Optimizer é beta e não restaura contexto na abertura.
 
 ---
 

@@ -2,6 +2,9 @@
 
 > Diga ao Claude: "Siga este checklist para configurar o projeto."
 > Claude vai executar cada passo na ordem correta.
+>
+> Cursor, Codex ou Grok: não siga os slash commands daqui.
+> Abra `setup/08-multi-agente.md` e use a seção do agente.
 
 ---
 
@@ -32,6 +35,7 @@ for name, key in [('Caveman','caveman'), ('Token Optimizer','token-optimizer'), 
 - Se RTK ou code-review-graph faltarem → seguir **setup/01-ferramentas-globais.md**
 - Se Caveman faltar → instalar pelo bash (está em setup/01-ferramentas-globais.md)
 - Se Token Optimizer ou Context Mode faltarem → instalar pelo chat (setup/02-plugins-claude.md)
+- Remover atribuição em commits/PRs e bloquear comentários novos no código → **setup/07-estilo-codigo.md** (configuração global, uma vez por máquina)
 
 ---
 
@@ -51,6 +55,17 @@ Build the code review graph for this project
 ---
 
 ## Passo 4 — Criar CLAUDE.md do projeto
+
+> **Não gerar CLAUDE.md se o projeto atual for este próprio guia de
+> onboarding** (`claude-code-onboarding`) — ele não tem stack de aplicação
+> e o arquivo gerado é só artefato de teste do checklist, sem valor para
+> commitar.
+
+Antes de gerar, verificar se `CLAUDE.md` já está no `.gitignore` do
+projeto:
+```bash
+grep -qx 'CLAUDE.md' .gitignore 2>/dev/null && echo "ignorado: ok gerar sem risco" || echo "NÃO ignorado: CLAUDE.md normalmente deve ser commitado — confirmar com o usuário antes de gerar se isso não é o esperado"
+```
 
 Gerar CLAUDE.md baseado no template:
 ```

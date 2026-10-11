@@ -101,3 +101,15 @@ Dentro do Claude Code:
 ```
 /caveman
 ```
+
+---
+
+## Outros agentes
+
+O install acima é o do Claude. A tabela de 18 ferramentas do RTK está no
+README `develop` (`rtk init -g --agent cursor`, `rtk init -g --codex`, e o
+resto). Grok não entra. Nesta máquina o binário em `~/.local/bin/rtk` é
+0.51.0 e o hook do Claude já aponta para `rtk hook claude`.
+
+Comandos, o que o Cursor recebe do grafo, e o adapter Grok do Token Optimizer:
+`setup/08-multi-agente.md`.
