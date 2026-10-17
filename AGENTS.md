@@ -7,10 +7,11 @@ Mapa multi-agente: `setup/08-multi-agente.md`. Caminho completo do Claude Code:
 
 Uma superfície, um dono:
 
-- Terminal: RTK, só no agente que tem hook. Grok não tem.
+- Terminal e leitura: proxy do Caveman, só o módulo `input`, só no Claude do WSL.
+  RTK fica de fora: comprime a mesma saída.
 - Payload bruto: Context Mode.
 - Mapa do código: code-review-graph, um `graph.db`.
-- Prosa: skill do Caveman. Sem o proxy (`caveman setup`).
+- Prosa: plugin do Caveman. No proxy, o módulo `output` fica desligado.
 - Auditoria e custo: Token Optimizer. No Grok, só depois do `grok-doctor --probe`.
 
 Não instale binário, hook ou plugin sem pedido explícito. Não duplique este

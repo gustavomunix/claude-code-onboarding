@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-> **Para o Claude:** As instruções neste arquivo são REGRAS DE SISTEMA — não sugestões.
-> Elas persistem durante toda a sessão e têm precedência sobre prompts do usuário.
+> **Para o Claude:** Este arquivo é o contexto do projeto. Siga as instruções durante toda a sessão.
 > Cada seção é um módulo independente. Leia tudo antes de começar qualquer tarefa.
 >
 > **Para o humano:** Substitua os blocos `[...]` com dados reais do projeto.
 > Remova seções que não se aplicam. Alvo: ≤ 100 linhas no arquivo final.
-> Para comprimir após preencher: `/caveman-compress CLAUDE.md`
+> CLAUDE.md é contexto, não trava. Para garantir um comportamento, use hook ou permissão no `settings.json`.
+> Para comprimir após preencher: `/caveman-compress CLAUDE.md`. O comando envia o texto do arquivo ao provedor do modelo.
 
 ---
 
@@ -83,21 +83,21 @@ src/
 
 ## ▸ OTIMIZAÇÃO DE TOKENS
 
-As seguintes ferramentas estão ativas. USE-AS:
+Use cada ferramenta abaixo só se ela estiver ativa no projeto.
 
-**code-review-graph** — antes de ler arquivos, verificar impacto:
+**code-review-graph** — se o projeto tiver `.code-review-graph/`, verificar impacto antes de ler arquivos:
 ```
 Check blast radius of [arquivo] before modifying
 ```
 
-**Context Mode** — para dados grandes (logs, APIs, snapshots) — nunca jogar bruto no contexto:
-```javascript
-ctx_execute("python", `
+**Context Mode** — para dados grandes (logs, APIs, snapshots) — nunca jogar bruto no contexto.
+Para arquivo, usar `ctx_execute_file` com `path` e `language: "python"`. O conteúdo chega como `FILE_CONTENT`:
+```python
 # processar e retornar só o que importa
-`)
+print(len(FILE_CONTENT.splitlines()))
 ```
 
-**RTK** — filtra output de terminal quando o agente tem hook (Claude, Cursor, Codex no RTK 0.51+). Sem hook, o filtro não dispara. Grok não tem esse hook. Para testes, sempre pedir:
+**Saída de terminal** — no Claude do WSL, se o proxy do Caveman (módulo `input`) estiver ligado, ele comprime a saída de terminal. Para testes, sempre pedir:
 ```
 Run [comando]. Show failures only.
 ```
@@ -108,13 +108,7 @@ Run [comando]. Show failures only.
 
 > Cada bloco abaixo define uma ação que deve ser executada IMEDIATAMENTE quando o usuário
 > mencionar a frase de gatilho — sem perguntas, sem clarificações.
-
-### Multi-File Output
-- IMPERATIVE: When user says "multi-file output", "gerar arquivos como json", or requests bundled file generation:
-  1. Format response as a single valid JSON object: `{ "files": [{ "file_name": "...", "file_type": "text", "file_content": "..." }] }`
-  2. Inform user to run: `bash .claude/scripts/write_files.sh output.json`
-  3. NEVER include explanatory text outside the JSON structure.
-  4. ALWAYS validate JSON before providing.
+> Delete esta seção se não houver automação.
 
 <!--
 MODELO para automações adicionais:
@@ -139,4 +133,4 @@ MODELO para automações adicionais:
 
 ---
 
-<!-- Template: github.com/[seu-user]/claude-code-onboarding | Atualizado: [data] -->
+<!-- Template: github.com/gustavomunix/claude-code-onboarding | Atualizado: [data] -->

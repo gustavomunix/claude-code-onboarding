@@ -5,7 +5,7 @@ Cobre ferramentas de otimização de tokens, CLAUDE.md otimizado, recursos avan�
 
 Cursor, Codex e Grok usam o mesmo stack só onde o upstream tem hook ou MCP.
 O mapa está em `setup/08-multi-agente.md`. Headroom e JFrog Boost ficam de fora:
-os dois comprimem a mesma saída de terminal que o RTK.
+os dois comprimem a mesma saída que o proxy do Caveman.
 
 ---
 
@@ -30,20 +30,17 @@ README.md
 AGENTS.md                    ← regras curtas para Grok, Codex e Cursor
 setup/
   00-checklist.md            ← ponto de entrada — checklist que o Claude segue
-  01-ferramentas-globais.md  ← RTK + Caveman + code-review-graph
+  01-ferramentas-globais.md  ← Node + Caveman (plugin e proxy `input`) + code-review-graph
   02-plugins-claude.md       ← Token Optimizer + Context Mode
   03-projeto.md              ← configurar MCP e grafo por projeto
   04-sessao.md               ← sequência de abertura e comandos de controle
-  05-recursos-avancados.md   ← Plan Mode, Auto Plan Mode, Rewind, CLAUDE.md Supremacy
+  05-recursos-avancados.md   ← Plan Mode, Rewind, o que o CLAUDE.md é na prática
   06-higiene-contexto.md     ← context poisoning, /context, sanity check, A.B.E
   07-estilo-codigo.md        ← atribuição em commits/PRs e bloqueio de comentários novos
-  08-multi-agente.md         ← quem cobre o quê em Cursor, Codex e Grok
+  08-multi-agente.md         ← quem cobre o quê em Cursor, Codex e Grok; como medir e desativar o que quebrar
 templates/
   CLAUDE.md                  ← template base para qualquer projeto
-  auto-plan-mode.txt         ← system prompt para Auto Plan Mode
   .gitignore-additions       ← entradas para adicionar ao .gitignore
-  scripts/
-    write_files.sh           ← script de multi-file output (JSON → arquivos)
 ```
 
 ---
@@ -52,11 +49,13 @@ templates/
 
 | Ferramenta | O que faz | Redução típica |
 |---|---|---|
-| **Caveman** | Comprime respostas do Claude | ~75% output |
-| **RTK** | Filtra output de terminal (git, testes, ls) | ~80% input |
+| **Caveman** | Encurta respostas do Claude | ~8,5% output medido pela JetBrains; o upstream anuncia mais |
+| **Proxy do Caveman** (`input`, opcional, só no Claude do WSL) | Comprime o que o agente lê (logs, testes, JSON) | ~33% do input em arquivos de teste, segundo o upstream |
 | **code-review-graph** | Lê só arquivos relevantes via grafo AST | ~82x por consulta |
 | **Context Mode** | Sandbox para dados brutos — APIs, logs, snapshots | 94–99% por chamada |
 | **Token Optimizer** | Audit estrutural + compactação com checkpoint | até 80%+ sessão |
+
+RTK não é usado: o proxy do Caveman (`input`) comprime a mesma saída.
 
 Sessão de 2h que custaria ~$12 → ~$2–3 com o stack completo no Claude.
 Nos outros agentes a cobertura é a da matriz em `setup/08-multi-agente.md`.
@@ -68,22 +67,20 @@ No Grok o Token Optimizer é beta e não restaura contexto na abertura.
 
 | Recurso | Como ativar | Para que serve |
 |---|---|---|
-| **Plan Mode** | `Shift+Tab` 2x ou `/plan` | Ver plano antes de executar |
-| **Auto Plan Mode** | `claude --append-system-prompt "$(cat templates/auto-plan-mode.txt)"` | Plan Mode automático em toda ação |
+| **Plan Mode** | `claude --permission-mode plan`; na sessão, `Shift+Tab` 2x ou `/plan` | Ver plano antes de executar |
 | **Rewind** | `Esc` 2x ou `/rewind` | Desfazer contexto + arquivos |
 | **Context Inspection** | `/context` | Ver tokens por componente |
 | **Sanity Check** | Nome no CLAUDE.md → `What is my name?` | Verificar se CLAUDE.md está sendo lido |
-| **Multi-File Output** | Dizer "multi-file output" | Claude gera JSON → `write_files.sh` cria tudo |
 
 ---
 
 ## CLAUDE.md — O que o template cobre
 
-- **CLAUDE.md Supremacy** — instruções como regras de sistema, não sugestões
+- **Contexto da sessão** — o CLAUDE.md entra no contexto; para garantir comportamento, use hook ou permissão
 - **Módulos isolados** — separadores `---` e `## ▸` previnem instruction bleed
 - **Controle de acesso** — arquivos obrigatórios, proibidos e nunca-ler
 - **Token optimization** — instruções para usar code-review-graph e Context Mode
-- **Automation Rules** — gatilhos por palavra-chave com IMPERATIVE (Multi-File Output + seus scripts)
+- **Automações** — gatilhos por palavra-chave com IMPERATIVE para os seus scripts
 - **Sanity check** — slot para nome verificável
 - **Known Context** — máximo 5 itens não-inferíveis do código
 
@@ -103,11 +100,11 @@ O arquivo `setup/06-higiene-contexto.md` cobre:
 
 ## Requisitos
 
-- Node.js ≥ 18
-- Python 3.x + pip
+- Node.js ≥ 22.13 (nvm) e pnpm via corepack
+- Python 3.x + pipx
 - Claude Code CLI ≥ v1.0.86
-- `jq` (para o script write_files.sh)
+- `jq` (verificações do `setup/07-estilo-codigo.md`)
 
 ---
 
-*Todas as ferramentas rodam 100% localmente. Nenhuma envia dados para servidores externos.*
+*Plugins e skills rodam localmente. O CLI do Caveman (`@caveman-ai/cli`) entra só no proxy `input` do `setup/01-ferramentas-globais.md`. Ele envia telemetria por padrão: o `setup/01` manda rodar `caveman telemetry off` antes do `caveman setup`. Confira a política de cada ferramenta antes de instalar.*

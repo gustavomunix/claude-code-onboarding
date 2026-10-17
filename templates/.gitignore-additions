@@ -5,9 +5,3 @@
 
 # Claude Code local
 .claude/settings.local.json
-
-# Token Optimizer
-.token-optimizer-cache/
-
-# Logs e caches locais
-*.session.jsonl

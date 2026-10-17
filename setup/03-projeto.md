@@ -10,34 +10,49 @@ Claude Code:
 
 ```bash
 # Na raiz do projeto (onde está o .git):
-code-review-graph install --platform claude-code
+code-review-graph install --platform claude-code --no-instructions --dry-run
+code-review-graph install --platform claude-code --no-instructions
 code-review-graph build
 ```
 
-O que acontece no Claude:
-- Cria `.mcp.json` com o servidor MCP local
-- Cria `CLAUDE.md` com instruções de uso do grafo
-- Cria `.claude/skills/` com slash commands de revisão
-- Adiciona `.code-review-graph/` ao `.gitignore`
+Rode o `--dry-run` antes e confira a lista. Sem as flags, o install no Claude:
+- cria `.mcp.json` com o servidor MCP local;
+- cria ou faz append no `CLAUDE.md` com instruções de uso do grafo;
+- cria `.claude/skills/` com quatro skills de uso do grafo;
+- cria `.claude/settings.json` com hooks `PostToolUse` e `SessionStart`, que
+  atualizam o grafo;
+- instala o hook git `pre-commit` com resumo de risco;
+- adiciona `.code-review-graph/` ao `.gitignore`.
+
+Sem TTY (rodado pelo Claude, por script ou CI), a pergunta sobre o
+`CLAUDE.md` não aparece e a resposta é sim. Por isso o `--no-instructions`:
+o `CLAUDE.md` vem do template (`setup/00-checklist.md`, Passo 4).
+Não quer hooks nem `pre-commit`? Some `--no-hooks`. Aí o grafo só atualiza
+com `code-review-graph update`, `watch` ou o daemon (abaixo).
 
 Cursor (code-review-graph 2.3.9, já instalado via pipx nesta máquina):
 
 ```bash
-pip install -U code-review-graph
-code-review-graph install --platform cursor
+pipx upgrade code-review-graph
+code-review-graph install --platform cursor --no-hooks --no-instructions --dry-run
+code-review-graph install --platform cursor --no-hooks --no-instructions
 code-review-graph build
 ```
 
-No Cursor isso grava só `.cursor/mcp.json`. Sem skill, sem hook, sem
-pre-commit. O grafo é o mesmo: Tree-sitter → SQLite → o agente pergunta o
-blast radius pelo MCP e lê só esses arquivos. Como ninguém reindexa no save,
+Sem as flags, o install no Cursor não grava só `.cursor/mcp.json`. Ele faz
+append no `AGENTS.md`, cria `.cursorrules` e adiciona hooks em
+`~/.cursor/hooks.json` (global, todos os projetos). Com as duas flags sobram
+`.cursor/mcp.json` e a linha no `.gitignore`, que entra sempre.
+
+O grafo é o mesmo: Tree-sitter → SQLite → o agente pergunta o blast radius
+pelo MCP e lê só esses arquivos. Como ninguém reindexa no save,
 rode `code-review-graph update` ou deixe `code-review-graph watch` aberto.
 Reinicie o Cursor depois do install. Detalhe em `setup/08-multi-agente.md`.
 
 Outras flags do 2.3.9: `codex`, `windsurf`, `zed`, `continue`, `opencode`,
 `antigravity`, `gemini-cli`, `qwen`, `kiro`, `qoder`, `copilot`,
-`copilot-cli`, `codebuddy`, `hermes`. Não há `grok`. O Grok importa o
-`.mcp.json` do install Claude. Pre-commit só em Codex, Claude Code e Qoder.
+`copilot-cli`, `codebuddy`, `hermes`. Não há `grok`: o MCP do grafo no Grok
+está no `setup/08-multi-agente.md`. Pre-commit só em Codex, Claude Code e Qoder.
 
 Desinstalar remove só arquivo do CRG:
 
@@ -65,6 +80,9 @@ Responda **sim** (ou clique Allow). Sem isso, o grafo não funciona.
 
 ## Manter o grafo atualizado
 
+Com os hooks do install, o Claude atualiza o grafo depois de cada edição.
+Com `--no-hooks`, ou em outro agente, use uma das opções abaixo.
+
 **Opção A — watch automático** (para sessões longas):
 ```bash
 code-review-graph watch
@@ -77,20 +95,23 @@ crg-daemon start
 crg-daemon status
 ```
 
-**Opção C — atualizar manualmente** (padrão, basta dizer no chat):
+**Opção C — atualizar manualmente** (basta dizer no chat):
 ```
 Update the code review graph
 ```
 
 ---
 
-## Slash commands disponíveis após setup
+## Skills disponíveis após setup
+
+O install grava quatro skills em `.claude/skills/` (sem `--no-skills`):
 
 | Comando | O que faz |
 |---|---|
-| `/code-review-graph:build-graph` | Constrói ou reconstrói o grafo |
-| `/code-review-graph:review-delta` | Revisa mudanças desde o último commit |
-| `/code-review-graph:review-pr` | Revisão completa de PR com blast-radius |
+| `/review-changes` | Revisa as mudanças com blast radius |
+| `/explore-codebase` | Explora a estrutura do código pelo grafo |
+| `/debug-issue` | Acha os arquivos relevantes para um bug |
+| `/refactor-safely` | Checa o impacto antes de refatorar |
 
 ---
 
@@ -122,7 +143,7 @@ Don't read the whole codebase. Use the graph to find only the relevant files.
 
 **Antes de abrir PR:**
 ```
-/code-review-graph:review-delta
+/review-changes
 ```
 
 ---

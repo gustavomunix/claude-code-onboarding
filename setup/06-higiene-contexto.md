@@ -43,7 +43,7 @@ Nas próximas vezes que você pedir update, ele tenta fazer deploy junto — mes
 **CLAUDE.md dinâmico:**
 - Para tarefas específicas, peça ao Claude para modificar o CLAUDE.md temporariamente
 - Ao terminar: `Revert CLAUDE.md to its previous state`
-- Backup antes: `git stash` ou `cp CLAUDE.md CLAUDE.md.backup`
+- Backup antes: `cp CLAUDE.md CLAUDE.md.backup`
 
 ---
 
@@ -119,11 +119,9 @@ Depois perguntar ao Claude: `Where is my context potentially inefficient?`
 Ele vai sugerir otimizações baseado no que vê.
 
 **Desabilitar MCPs não usados** para liberar espaço:
-```
-/mcp              (listar MCPs ativos)
-@nome-do-mcp disable   (desabilitar o que não está sendo usado)
-/context          (verificar a economia)
-```
+1. `/mcp` lista os servidores.
+2. Escolha o servidor que não está em uso → Disable.
+3. `/context` mostra a economia.
 
 ---
 

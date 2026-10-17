@@ -4,58 +4,81 @@ Instale uma vez. Ficam disponíveis em todos os projetos.
 
 ---
 
-## RTK — Rust Token Killer
+## Node e pnpm
 
-Filtra output de terminal (git, testes, ls) antes de chegar ao contexto do Claude. Redução média: 80%.
+Node 22.13 ou mais novo (o proxy do Caveman exige; os hooks dos plugins
+chamam `node`). Com nvm:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | sh
-```
-
-Ativar hook global no Claude Code:
-```bash
-rtk init -g
-# Responda 'y' quando perguntar sobre settings.json
-```
-
-Se o modo interativo não funcionar, adicione manualmente ao `~/.claude/settings.json`:
-```json
-"hooks": {
-  "PreToolUse": [{
-    "matcher": "Bash",
-    "hooks": [{ "type": "command", "command": "rtk hook claude" }]
-  }]
-}
+curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+. "$HOME/.nvm/nvm.sh"
+nvm install 24 && nvm alias default 24
+corepack enable && corepack prepare pnpm@latest --activate
 ```
 
 Verificar:
 ```bash
-rtk gain     # deve mostrar estatísticas (mesmo zeradas)
+node -v && pnpm -v
 ```
 
-> **Atenção:** existe um pacote chamado `rtk` (Rust Type Kit) que não é este.
-> Se `rtk gain` der erro, desinstale com `cargo uninstall rtk` e reinstale pelo curl acima.
+Node 25 em diante não traz o corepack. Nesse caso: `npm install -g corepack`.
 
 ---
 
 ## Caveman
 
-Comprime respostas do Claude (~75% de redução de output). Não afeta o raciocínio, só o texto final.
+Encurta as respostas do Claude. Não afeta o raciocínio, só o texto final.
+A economia medida é modesta: a JetBrains mediu ~8,5% de output em 86 tarefas
+reais, sem perda de qualidade. O upstream anuncia mais. As regras custam ~1.160
+tokens de input, então em tarefa curta o ganho pode ser nulo. Meça com e sem.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
-```
-
-O installer detecta Claude Code e instala o plugin automaticamente.
-Se não conseguir, rode dentro do chat:
+Instale só o plugin, dentro do chat:
 ```
 /plugin marketplace add JuliusBrussee/caveman
 /plugin install caveman@caveman
+/reload-plugins
 ```
 
-Verificar (dentro do chat):
+Ou, no terminal, o mesmo plugin:
+```bash
+claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman
 ```
-/caveman
+
+Não rode `npx @caveman-ai/cli@latest` nem o `install.sh` sem `--only`: instalam em todos os
+agentes da máquina (opencode, Cursor, Grok), com hooks e regras globais.
+O CLI `@caveman-ai/cli` entra só no proxy abaixo, com `--only input`.
+O plugin e a skill não enviam nada. A exceção é `/caveman-compress`, que envia
+o arquivo comprimido ao provedor do modelo.
+
+Para fixar o modo em todas as sessões, crie `~/.config/caveman/config.json`
+(no Windows, `%APPDATA%\caveman\config.json`):
+```json
+{"defaultMode": "caveman"}
+```
+
+### Proxy do Caveman, só o módulo `input` (opcional)
+
+Comprime o que o agente lê (logs, testes, JSON). Precisa do Node 22.13+.
+Só no Claude do WSL. Não ligue no Claude do Windows nem em outro agente.
+
+RTK não é usado: o proxy do Caveman (`input`) comprime a mesma saída.
+
+```bash
+npm install -g @caveman-ai/cli
+caveman telemetry off
+caveman setup --dry-run --only input --agents claude
+caveman setup --yes --only input --agents claude
+```
+
+O setup aponta `ANTHROPIC_BASE_URL` para `http://127.0.0.1:8787/w/claude` no
+`~/.claude/settings.json`, instala hooks em vários eventos e registra um MCP.
+Faça backup de `~/.claude/settings.json` e `~/.claude.json` antes. Se o proxy
+estiver parado, o Claude Code não conecta: `caveman status` e `caveman doctor`.
+Vale só na sessão seguinte.
+
+Verificar:
+```bash
+caveman status
 ```
 
 ---
@@ -64,11 +87,32 @@ Verificar (dentro do chat):
 
 Constrói um mapa estrutural do código (AST + dependências). O Claude consulta o grafo e lê só os arquivos relevantes. Redução: de 951K tokens para ~2K por consulta em projetos grandes.
 
+Prefira o `pipx` (instalação isolada):
+
 ```bash
-pip install code-review-graph
-# ou para instalação isolada:
 pipx install code-review-graph
 ```
+
+Ubuntu 24.04+ e WSL: o Python do sistema bloqueia `pip install` global e pode
+vir sem `pip`, `venv` e `pipx`. Instale antes (pede `sudo`, num terminal com TTY;
+o `!` do Claude Code não serve):
+
+```bash
+sudo apt install -y python3-pip python3-venv pipx
+sudo apt install -y jq
+pipx install code-review-graph
+```
+
+Sem a senha, pelo PowerShell: `wsl -u root -- apt install -y python3-pip python3-venv pipx jq`.
+O `jq` é usado nas verificações do `setup/07-estilo-codigo.md`.
+
+No Windows, com Scoop: `scoop install python pipx`, e então `pipx install code-review-graph`.
+
+WSL: o PATH inclui as pastas do Windows (`/mnt/c/...`) no fim. Se o Linux ainda
+não tem `pipx`, o shell cai no `pipx` do Windows e instala lá, não no Linux.
+Confira com `type -a pipx`: o primeiro deve ser `/usr/bin/pipx`. Cada lado
+(Windows e WSL) tem a sua cópia do code-review-graph. Projetos abertos pelo
+Claude no WSL usam a do Linux.
 
 Verificar:
 ```bash
@@ -79,23 +123,14 @@ code-review-graph --version
 
 ---
 
-## RTK — Comandos úteis após instalação
-
-```bash
-rtk gain                  # tokens economizados até agora
-rtk gain --graph          # gráfico ASCII dos últimos 30 dias
-rtk init --show           # confirma que o hook está ativo
-rtk git status            # testar filtro no git status
-```
-
----
-
 ## Verificação conjunta
 
 ```bash
-rtk --version && echo "RTK ok"
+caveman status
 code-review-graph --version && echo "CRG ok"
 ```
+
+`caveman status` só se instalou o proxy.
 
 Dentro do Claude Code:
 ```
@@ -106,10 +141,5 @@ Dentro do Claude Code:
 
 ## Outros agentes
 
-O install acima é o do Claude. A tabela de 18 ferramentas do RTK está no
-README `develop` (`rtk init -g --agent cursor`, `rtk init -g --codex`, e o
-resto). Grok não entra. Nesta máquina o binário em `~/.local/bin/rtk` é
-0.51.0 e o hook do Claude já aponta para `rtk hook claude`.
-
-Comandos, o que o Cursor recebe do grafo, e o adapter Grok do Token Optimizer:
-`setup/08-multi-agente.md`.
+O install acima é o do Claude. Comandos, o que o Cursor recebe do grafo, e o
+adapter Grok do Token Optimizer: `setup/08-multi-agente.md`.

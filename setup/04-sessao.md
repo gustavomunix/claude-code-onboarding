@@ -1,24 +1,25 @@
 # Sequência de Sessão — Uso Diário
 
 Referência de comandos para cada momento da sessão no Claude Code.
-Cursor, Codex e Grok não têm `/token-optimizer` nem `/caveman full` do plugin.
-A abertura desses agentes está em `setup/08-multi-agente.md`.
+Os slash commands abaixo são dos plugins do Claude Code.
+A abertura de Cursor, Codex e Grok está em `setup/08-multi-agente.md`.
 
 ---
 
-## Abertura obrigatória (toda sessão, nesta ordem)
+## Abertura (toda sessão, nesta ordem)
+
+O Caveman já entra no modo padrão pelo hook, no início da sessão. Não precisa
+de comando. Se você desligou, reative:
+```
+/caveman
+```
+Outros modos: `/ultracave` e `/megacave`. Desligar: `/caveman off`.
 
 ```
-/caveman full
+/token-optimizer:quick
 ```
-Sempre primeiro. Comprime respostas do Claude antes de qualquer token ser gasto.
-Com Opus/Sonnet high effort, isso economiza 30–40K tokens só de preamble.
-
-```
-/token-optimizer quick
-```
-Health check em 10 segundos. Detecta CLAUDE.md inchado, skills não usadas, MEMORY.md >200 linhas.
-Se mostrar issues → `/token-optimizer` para corrigir.
+Health check em 10 segundos. Mostra o overhead de contexto, o Quality score e
+os três maiores ofensores. Se mostrar issues → `/token-optimizer` para corrigir.
 
 ```
 Update the code review graph
@@ -26,9 +27,9 @@ Update the code review graph
 Primeira vez no projeto: `Build the code review graph for this project`
 
 ```
-ctx stats
+/context-mode:ctx-stats
 ```
-Confirma que Context Mode está ativo. Se der erro → `/context-mode:ctx-doctor`
+Confirma que o Context Mode está ativo. Se der erro → `/context-mode:ctx-doctor`
 
 ---
 
@@ -51,28 +52,33 @@ Don't read the whole codebase. Use the graph to find only the relevant files.
 ### Code review / preparar PR
 
 ```
-/code-review-graph:review-delta
+/review-changes
 ```
+Skill que o `code-review-graph install` cria no projeto.
 
 ### Analisar logs grandes sem poluir contexto
 
-```
-ctx_execute("python", `
-with open('app.log') as f:
-    lines = f.readlines()
+Peça a ferramenta `ctx_execute_file` com `path: "app.log"` e
+`language: "python"`. O arquivo chega no código como `FILE_CONTENT`:
+
+```python
+lines = FILE_CONTENT.splitlines()
 errors = [l for l in lines if 'ERROR' in l or 'FATAL' in l]
 print(f"Total errors: {len(errors)}")
 for e in errors[-20:]:
     print(e.strip())
-`)
 ```
+
+Não use `ctx_execute` com `open('app.log')`: o código roda numa pasta
+temporária e o caminho relativo falha.
 
 ### Rodar testes sem flood de output
 
 ```
 Run the tests for [módulo]. Show failures only.
 ```
-RTK filtra automaticamente. Reduz de ~2.000 linhas para apenas as falhas.
+O pedido já corta a saída para as falhas. No Claude do WSL, o proxy do
+Caveman (módulo `input`) comprime a saída de terminal.
 
 ---
 
@@ -80,7 +86,7 @@ RTK filtra automaticamente. Reduz de ~2.000 linhas para apenas as falhas.
 
 **A cada 20–30 minutos:**
 ```
-ctx stats
+/token-optimizer:quick
 ```
 
 | O que aparece | Significado | Ação |
@@ -89,6 +95,10 @@ ctx stats
 | `Quality: C` ou `D` | Opus/Sonnet objetivamente piores agora | `/compact` imediato |
 | `Context fill: >65%` | Zona de degradação real | Summarize → `/compact` |
 | Loop detection warning | Claude repetindo abordagem | Reframe explícito (ver abaixo) |
+
+Quality e Context fill vêm do `/token-optimizer:quick`. O
+`/context-mode:ctx-stats` mostra quanto o Context Mode economizou por
+ferramenta.
 
 ---
 
@@ -138,13 +148,13 @@ Depois troque. O contexto pós-compactação é menor, o re-send custa menos.
 ## Fim de sessão
 
 ```
-/token-optimizer
+/token-optimizer:token-dashboard
 ```
-Abre dashboard em `http://localhost:24842/token-optimizer`:
-- Custo real da sessão em dólares
-- Quality score ao longo do tempo
-- Top 5 prompts mais caros
-- O que cada ferramenta economizou
+Abre o dashboard como arquivo HTML: uso de contexto, Quality score, histórico
+de sessões e economia.
+
+A URL `http://localhost:24842/token-optimizer` só funciona depois de rodar
+`measure.py setup-daemon`, que sobe o servidor local.
 
 ---
 
@@ -152,16 +162,16 @@ Abre dashboard em `http://localhost:24842/token-optimizer`:
 
 ```
 ABERTURA
-├── /caveman full                          → sempre primeiro
-├── /token-optimizer quick                 → checa desperdício estrutural
+├── (hook)                                 → Caveman já ativo; /caveman reativa
+├── /token-optimizer:quick                 → checa desperdício estrutural
 ├── Update the code review graph           → atualiza o mapa do projeto
-└── ctx stats                              → confirma Context Mode ativo
+└── /context-mode:ctx-stats                → confirma Context Mode ativo
 
 DURANTE
-├── ctx stats                              → a cada 20 min
+├── /token-optimizer:quick                 → a cada 20 min
 ├── Check blast radius of <arquivo>        → antes de mexer em qualquer coisa
 ├── Run tests for <módulo>. Failures only. → testes sem flood de output
-└── /code-review-graph:review-delta        → antes de abrir PR
+└── /review-changes                        → antes de abrir PR
 
 ALERTAS
 ├── Quality B ou abaixo  → /compact
@@ -170,7 +180,7 @@ ALERTAS
 └── Trocando de modelo   → /compact antes
 
 FIM
-└── /token-optimizer     → dashboard com custo real da sessão
+└── /token-optimizer:token-dashboard → dashboard da sessão
 ```
 
 ---
@@ -182,5 +192,5 @@ FIM
 - Chegam ao limite de contexto mais rápido
 - Têm mais a perder numa compactação sem checkpoint
 
-Opus com contexto em 80% está objetivamente pior do que Sonnet com contexto em 30%.
+Contexto cheio piora qualquer modelo, inclusive o Opus.
 Compactar no momento certo (Quality B, não esperar C ou D) é a decisão de maior impacto.

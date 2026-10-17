@@ -10,25 +10,29 @@ Separa pesquisa de execução. Claude analisa e planeja sem modificar nada até 
 Essencial para mudanças multi-arquivo ou quando você quer que Claude "pense antes de agir".
 
 **Ativar:**
-- `Shift+Tab` duas vezes
+- `Shift+Tab` alterna os modos: default → auto-accept → plan. Do default, aperte duas vezes
 - Ou digitar `/plan` no chat
 
-**Desativar:** `Shift+Tab` novamente
+**Desativar:** `Shift+Tab` de novo, até voltar ao default
 
 **O que muda no Plan Mode:**
-- Claude tem acesso apenas a ferramentas de leitura (Read, LS, Glob, Grep, WebSearch, Task)
+- Claude tem acesso apenas a ferramentas de leitura (Read, Glob, Grep, WebSearch, WebFetch, Agent)
 - Ferramentas de escrita ficam bloqueadas (Edit, Write, Bash, MCP que modifica estado)
 - Respostas são estruturadas, numeradas, com verbosidade consistente
 - Ao sair do Plan Mode, Claude pede confirmação adicional antes de executar
 
-**Opus Plan Mode** (selecionar no `/model` → opção 4):
-- Usa Opus para planejar (1M de contexto, perguntas de clarificação, cria `plan.md`)
+**Opus Plan Mode:**
+```
+/model opusplan
+```
+- Usa Opus para planejar
 - Usa Sonnet para executar
-- O `plan.md` pode ser editado antes da execução
 
-**Onde planos ficam salvos** (configurar em `~/.claude/settings.json`):
+**Onde planos ficam salvos:** o padrão já é `~/.claude/plans`. Para guardar os
+planos dentro do projeto, use `plansDirectory` no `.claude/settings.json` do
+projeto. O campo só aceita caminho relativo ao projeto:
 ```json
-{ "plansDirectory": "~/.claude/plans" }
+{ "plansDirectory": ".claude/plans" }
 ```
 
 **Quando usar:**
@@ -36,46 +40,12 @@ Essencial para mudanças multi-arquivo ou quando você quer que Claude "pense an
 - Mudanças em código que você não conhece bem
 - Sempre que quiser ver o plano antes de executar
 
----
-
-## Auto Plan Mode
-
-Faz o Claude entrar em Plan Mode **automaticamente** antes de qualquer ação, sem você precisar ativar manualmente.
-
-**Como ativar:**
-
+**Abrir sempre em Plan Mode:**
 ```bash
-# Salvar o system prompt em arquivo
-cat > ~/.claude/auto-plan-mode.txt << 'EOF'
-CRITICAL WORKFLOW REQUIREMENT
-
-MANDATORY PLANNING STEP: Before executing ANY tool (Read, Write, Edit, Bash, Grep, Glob,
-WebSearch, etc.), you MUST:
-
-1. FIRST: Use exit_plan_mode tool to present your plan
-2. WAIT: For explicit user approval before proceeding
-3. ONLY THEN: Execute the planned actions
-
-ZERO EXCEPTIONS: This applies to EVERY INDIVIDUAL USER REQUEST involving tool usage.
-
-CRITICAL: APPROVAL DOES NOT CARRY OVER BETWEEN USER INSTRUCTIONS
-Each new user message requiring tools = new planning step required.
-
-WORKFLOW FOR EACH USER REQUEST: Plan → User Approval → Execute (NEVER: Execute → Plan)
-EOF
-
-# Usar na sessão:
-claude --append-system-prompt "$(cat ~/.claude/auto-plan-mode.txt)"
+claude --permission-mode plan
 ```
 
-O template completo está em `templates/auto-plan-mode.txt`.
-
-**Quando usar:**
-- Em codebases desconhecidas
-- Para usuários que esquecem de ativar Plan Mode manualmente
-- Quando o custo de um erro é alto
-
-**Pode combinar com Plan Mode manual** — Auto Plan Mode aciona automaticamente, Plan Mode manual ainda funciona para pesquisa pura.
+Vale para codebases desconhecidas ou quando o custo de um erro é alto.
 
 ---
 
@@ -97,6 +67,7 @@ Disponível desde v2.0.0.
 - Histórico de contexto da conversa
 
 **O que o Rewind NÃO desfaz:**
+- Arquivos mudados por comando Bash (`rm`, `mv`, scripts)
 - Comandos bash que afetam sistemas externos (`git push`, `npm publish`)
 - Alterações feitas por você fora do Claude Code
 - Operações de rede (APIs, banco de dados)
@@ -112,18 +83,15 @@ Plan Mode primeiro → reveja o plano → execute sabendo que pode fazer Rewind 
 
 ---
 
-## CLAUDE.md Supremacy — O que isso significa na prática
+## CLAUDE.md — O que ele é na prática
 
-O Claude Code trata o CLAUDE.md como **regras de sistema**, não sugestões:
-
-| Fonte | Comportamento |
-|---|---|
-| CLAUDE.md | Regras imutáveis — definem os limites de operação |
-| Prompt do usuário | Requisição — deve funcionar dentro das regras do CLAUDE.md |
+O CLAUDE.md é contexto. O Claude Code carrega o arquivo no início da sessão e
+o modelo tenta seguir. Não é regra imutável: um prompt pode contrariar, e o
+modelo pode errar.
 
 **Implicações práticas:**
-- Instruções no CLAUDE.md persistem durante **toda a sessão**
-- Prompts raramente sobrescrevem diretivas do CLAUDE.md
+- Instruções no CLAUDE.md ficam no contexto durante **toda a sessão**
+- Para garantir um comportamento, use hook ou permissão no `settings.json`
 - Use markdown para criar fronteiras claras entre módulos (previne "instruction bleed")
 - Front-load contexto: liste arquivos permitidos e proibidos explicitamente no CLAUDE.md — é mais eficiente do que deixar Claude ler arquivos aleatórios
 
@@ -135,11 +103,13 @@ O Claude Code trata o CLAUDE.md como **regras de sistema**, não sugestões:
 
 | Ação | Atalho / Comando |
 |---|---|
-| Ativar Plan Mode | `Shift+Tab` duas vezes ou `/plan` |
-| Sair do Plan Mode | `Shift+Tab` |
-| Auto-accept edits no Plan Mode | `Shift+Tab` dentro do Plan Mode |
+| Auto-accept edits | `Shift+Tab` uma vez, a partir do default |
+| Ativar Plan Mode | `Shift+Tab` duas vezes, a partir do default, ou `/plan` |
+| Sair do Plan Mode | `Shift+Tab` até voltar ao default |
+| Abrir sempre em Plan Mode | `claude --permission-mode plan` |
+| Planejar com Opus, executar com Sonnet | `/model opusplan` |
 | Rewind | `Esc` duas vezes ou `/rewind` |
 | Compactar contexto | `/compact` |
-| Health check de tokens | `/token-optimizer quick` |
-| Ativar Caveman | `/caveman full` |
-| Stats de tokens | `ctx stats` |
+| Health check de tokens | `/token-optimizer:quick` |
+| Reativar Caveman | `/caveman` (o hook já ativa o modo padrão) |
+| Economia do Context Mode | `/context-mode:ctx-stats` |
