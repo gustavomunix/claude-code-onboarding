@@ -77,8 +77,8 @@ temporária e o caminho relativo falha.
 ```
 Run the tests for [módulo]. Show failures only.
 ```
-O pedido já corta a saída para as falhas. No Claude do WSL, o proxy do
-Caveman (módulo `input`) comprime a saída de terminal.
+O pedido já corta a saída para as falhas. No Claude (WSL ou Windows), o
+proxy do Caveman (módulo `input`) comprime a saída de terminal.
 
 ---
 

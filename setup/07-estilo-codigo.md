@@ -108,7 +108,9 @@ grep -A2 '"instructions"' ~/.config/opencode/opencode.jsonc
 
 No Windows (PowerShell):
 ```powershell
-Get-Content $env:USERPROFILE\.claude\settings.json | ConvertFrom-Json | Select-Object attribution
+$s = Get-Content $env:USERPROFILE\.claude\settings.json -Raw | ConvertFrom-Json
+$s.attribution
+$s.hooks.PreToolUse | Where-Object matcher -eq 'Write|Edit'
 ```
 
 Cursor e Zed: abra a tela de regras e confira se o texto está lá.

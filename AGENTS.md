@@ -7,8 +7,9 @@ Mapa multi-agente: `setup/08-multi-agente.md`. Caminho completo do Claude Code:
 
 Uma superfície, um dono:
 
-- Terminal e leitura: proxy do Caveman, só o módulo `input`, só no Claude do WSL.
-  RTK fica de fora: comprime a mesma saída.
+- Terminal e leitura: proxy do Caveman, só o módulo `input`, só no Claude (WSL e
+  Windows). RTK fica de fora: comprime a mesma saída. Só entra se o proxy não
+  rodar na máquina.
 - Payload bruto: Context Mode.
 - Mapa do código: code-review-graph, um `graph.db`.
 - Prosa: plugin do Caveman. No proxy, o módulo `output` fica desligado.

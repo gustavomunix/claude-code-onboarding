@@ -159,3 +159,8 @@ O installer já faz isso automaticamente. Verifique com:
 ```bash
 grep ".code-review-graph" .gitignore && echo "ok" || echo "adicionar manualmente"
 ```
+
+Windows (PowerShell):
+```powershell
+if (Select-String -Path .gitignore -Pattern '\.code-review-graph' -Quiet) { "ok" } else { "adicionar manualmente" }
+```

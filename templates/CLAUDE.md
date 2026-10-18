@@ -97,7 +97,7 @@ Para arquivo, usar `ctx_execute_file` com `path` e `language: "python"`. O conte
 print(len(FILE_CONTENT.splitlines()))
 ```
 
-**Saída de terminal** — no Claude do WSL, se o proxy do Caveman (módulo `input`) estiver ligado, ele comprime a saída de terminal. Para testes, sempre pedir:
+**Saída de terminal** — se o proxy do Caveman (módulo `input`) estiver ligado, ele comprime a saída de terminal. Para testes, sempre pedir:
 ```
 Run [comando]. Show failures only.
 ```

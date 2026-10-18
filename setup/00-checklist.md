@@ -17,6 +17,15 @@ jq --version 2>/dev/null && echo "jq: ok" || echo "jq: INSTALAR (ver setup/01-fe
 caveman status 2>/dev/null && echo "Proxy Caveman: ok" || echo "Proxy Caveman: opcional (ver setup/01-ferramentas-globais.md)"
 ```
 
+Windows (PowerShell + Scoop):
+```powershell
+foreach ($c in 'node', 'pnpm', 'code-review-graph', 'jq', 'caveman') {
+    if (Get-Command $c -ErrorAction SilentlyContinue) { "${c}: ok" } else { "${c}: INSTALAR (ver setup/01-ferramentas-globais.md)" }
+}
+```
+
+O `caveman` é opcional: só existe se o proxy estiver instalado.
+
 Verificar plugins instalados:
 ```bash
 python3 -c "
@@ -27,6 +36,14 @@ for name, key in [('Caveman','caveman'), ('Token Optimizer','token-optimizer'), 
     found = any(key in k for k in plugins)
     print(f\"{'✓' if found else '✗ INSTALAR'} {name}\")
 "
+```
+
+Windows (PowerShell):
+```powershell
+$p = (Get-Content "$env:USERPROFILE\.claude\settings.json" -Raw | ConvertFrom-Json).enabledPlugins.PSObject.Properties.Name
+foreach ($k in 'caveman', 'token-optimizer', 'context-mode') {
+    if ($p -match $k) { "ok $k" } else { "INSTALAR $k" }
+}
 ```
 
 ---
@@ -41,18 +58,20 @@ Siga esta ordem:
 3. Caveman, se faltar → instalar o plugin (**setup/01-ferramentas-globais.md**).
    Não usar o `install.sh` nem `npx @caveman-ai/cli@latest` sem `--only`
    (outros agentes: `--only <agente>`, ver **setup/08-multi-agente.md**).
-4. Proxy do Caveman, módulo `input` (opcional, só no Claude do WSL) →
-   **setup/01-ferramentas-globais.md**. RTK não é usado: o proxy comprime a
-   mesma saída.
+4. Proxy do Caveman, módulo `input` (opcional, só no Claude, no WSL e no
+   Windows) → **setup/01-ferramentas-globais.md**. RTK não é usado: o proxy
+   comprime a mesma saída. RTK é fallback só se o proxy não rodar na máquina.
 5. `defaultMode` do Caveman → **setup/01-ferramentas-globais.md**
    (`~/.config/caveman/config.json`; no Windows, `%APPDATA%\caveman\config.json`).
 6. Token Optimizer e Context Mode, se faltarem → **setup/02-plugins-claude.md**.
    Ligue o auto-update nos três marketplaces.
-7. Statusline combinada (Caveman + Token Optimizer) → **setup/02-plugins-claude.md**.
+7. Statusline combinada (Caveman + Token Optimizer) → **setup/02-plugins-claude.md**
+   (`.sh` no Unix, `.ps1` no Windows).
 8. Atribuição em commits/PRs e bloqueio de comentários novos →
    **setup/07-estilo-codigo.md** (configuração global, uma vez por máquina).
 9. Claude do Windows, se usar → **setup/08-multi-agente.md**, seção
-   "Windows e WSL". Cada lado tem a sua cópia de plugins e ferramentas.
+   "Windows e WSL". Cada lado tem a sua cópia de plugins, proxy, statusline e
+   ferramentas. No Windows, tudo vem do Scoop.
 
 ---
 
@@ -88,6 +107,11 @@ Antes de gerar, verificar se `CLAUDE.md` já está no `.gitignore` do
 projeto:
 ```bash
 grep -qx 'CLAUDE.md' .gitignore 2>/dev/null && echo "ignorado: ok gerar sem risco" || echo "NÃO ignorado: CLAUDE.md normalmente deve ser commitado — confirmar com o usuário antes de gerar se isso não é o esperado"
+```
+
+Windows (PowerShell):
+```powershell
+if (Select-String -Path .gitignore -Pattern '^CLAUDE\.md$' -Quiet -ErrorAction SilentlyContinue) { "ignorado: ok gerar sem risco" } else { "NÃO ignorado: confirmar com o usuário antes de gerar" }
 ```
 
 Gerar CLAUDE.md baseado no template:

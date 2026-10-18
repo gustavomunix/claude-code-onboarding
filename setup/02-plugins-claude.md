@@ -69,6 +69,11 @@ Vem desligado por padrão. Ligue nos três marketplaces: `caveman`,
 
 Repita em cada Claude (WSL e Windows).
 
+Conferir no Windows (PowerShell):
+```powershell
+(Get-Content "$env:USERPROFILE\.claude\plugins\known_marketplaces.json" -Raw | ConvertFrom-Json).PSObject.Properties | ForEach-Object { "$($_.Name) autoUpdate=$($_.Value.autoUpdate)" }
+```
+
 ---
 
 ## Economia esperada com ambos ativos
@@ -99,6 +104,13 @@ Repita em cada Claude (WSL e Windows).
 ```bash
 M=$(ls -d ~/.claude/plugins/cache/alexgreensh-token-optimizer/token-optimizer/*/ | sort -V | tail -1)skills/token-optimizer/scripts/measure.py
 python3 "$M" doctor
+```
+
+Windows (PowerShell):
+```powershell
+$v = Get-ChildItem "$env:USERPROFILE\.claude\plugins\cache\alexgreensh-token-optimizer\token-optimizer" -Directory | Sort-Object { [version]$_.Name } | Select-Object -Last 1
+$M = Join-Path $v.FullName 'skills\token-optimizer\scripts\measure.py'
+python $M doctor
 ```
 
 ## Comandos do Context Mode
@@ -156,8 +168,60 @@ No `~/.claude/settings.json` (backup antes):
 "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-combo.sh" }
 ```
 
-Vale na sessão seguinte. No Claude do Windows o Caveman usa
-`caveman-statusline.ps1`: este script é só para o WSL/Linux.
+Vale na sessão seguinte.
+
+### Windows (PowerShell)
+
+O `.sh` não roda no Claude do Windows. O equivalente chama o
+`caveman-statusline.ps1` do plugin. Crie `~\.claude\statusline-combo.ps1`:
+
+```powershell
+$ErrorActionPreference = 'SilentlyContinue'
+$utf8NoBom = New-Object Text.UTF8Encoding $false
+[Console]::InputEncoding = $utf8NoBom
+[Console]::OutputEncoding = $utf8NoBom
+$OutputEncoding = $utf8NoBom
+$inputJson = [Console]::In.ReadToEnd().TrimStart([char]0xFEFF)
+$claudeDir = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $HOME '.claude' }
+$plugins = Join-Path $claudeDir 'plugins'
+$toScript = Join-Path $plugins 'marketplaces\alexgreensh-token-optimizer\skills\token-optimizer\scripts\statusline.js'
+$caveDir = Get-ChildItem (Join-Path $plugins 'cache\caveman\caveman') -Directory |
+    Sort-Object { try { [version]$_.Name } catch { [version]'0.0' } } |
+    Select-Object -Last 1
+$caveScript = if ($caveDir) { Join-Path $caveDir.FullName 'src\hooks\caveman-statusline.ps1' }
+
+$cave = ''
+if ($caveScript -and (Test-Path $caveScript)) {
+    $cave = ($inputJson | powershell -NoProfile -ExecutionPolicy Bypass -File $caveScript 2>$null) -join "`n"
+}
+$to = ''
+if (Test-Path $toScript) {
+    $to = ($inputJson | node $toScript 2>$null) -join "`n"
+}
+
+if ($cave -and $to) {
+    [Console]::Out.Write("$cave $to")
+} else {
+    [Console]::Out.Write("$cave$to")
+}
+```
+
+O `Sort-Object` por `[version]` faz o papel do `sort -V`. As linhas de
+encoding não são opcionais: no PowerShell 5.1, o pipe para o `node` leva um
+BOM UTF-8, o `JSON.parse` do Token Optimizer falha e a parte dele some calada.
+
+Testar (pelo `cmd`, que não põe BOM):
+```powershell
+cmd /c "echo {} | powershell -NoProfile -ExecutionPolicy Bypass -File %USERPROFILE%\.claude\statusline-combo.ps1"
+```
+
+No `~\.claude\settings.json` (backup antes; troque `<você>`):
+
+```json
+"statusLine": { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\<você>\\.claude\\statusline-combo.ps1" }
+```
+
+Cada execução leva ~0,6 s (dois processos novos).
 
 ---
 
@@ -173,6 +237,11 @@ ln -s ~/.nvm/versions/node/v24.22.0/bin/node ~/.local/bin/node
 ```
 
 Trocou a versão do Node? Refaça o symlink.
+
+No Windows com Scoop, o `node` vem de `~\scoop\apps\nodejs\current` e o Scoop
+põe essa pasta no PATH do usuário. Se o hook não acha o `node`, confira com
+`Get-Command node` num terminal novo. Não aponte hooks para uma versão fixa:
+use o caminho `current`.
 
 MCP em "falha recente, retenta em 15 min": rode `/mcp` e reconecte
 `context-mode`. Depois, `/context-mode:ctx-doctor`.

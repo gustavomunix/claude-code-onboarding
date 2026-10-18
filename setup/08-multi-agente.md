@@ -18,7 +18,7 @@ contexto.
 
 | Superfície | Dono | Por quê |
 |---|---|---|
-| Saída de terminal e leitura (git, teste, lint, log) | **Proxy do Caveman, módulo `input`** | Comprime o que o agente lê. Só no Claude do WSL. RTK não entra: a faixa é a mesma. |
+| Saída de terminal e leitura (git, teste, lint, log) | **Proxy do Caveman, módulo `input`** | Comprime o que o agente lê. Só no Claude (WSL e Windows). RTK não entra: a faixa é a mesma. |
 | Payload bruto (log, CSV, snapshot, JSON de API) | **Context Mode** | Sandbox. O modelo recebe o resumo, o bruto fica no SQLite local. |
 | Mapa do código (quem chama o quê) | **code-review-graph** | Um `graph.db` local, servido por MCP. Vale para qualquer cliente MCP. |
 | Prosa da resposta | **Caveman, plugin ou skill** | Encurta a resposta. Não mexe em tool output. |
@@ -26,7 +26,7 @@ contexto.
 
 O proxy do Caveman senta na frente da sessão inteira (~33% menos input, número
 do upstream, em arquivos de teste com ruído). Aqui só o módulo `input` fica
-ligado, só no Claude do WSL: `caveman setup --only input --agents claude`. Os
+ligado, só no Claude (WSL e Windows): `caveman setup --only input --agents claude`. Os
 módulos `output` (a voz já vem do plugin), `routing` (Auto, envia prompts ao
 Caveman Cloud), `scripts`, `browse` e `waste-fixes` ficam desligados.
 
@@ -38,8 +38,10 @@ de bash do Token Optimizer, no shell que abre o `claude`:
 export TOKEN_OPTIMIZER_BASH_COMPRESS=0
 ```
 
+No PowerShell: `$env:TOKEN_OPTIMIZER_BASH_COMPRESS = '0'`.
+
 Para fixar, ponha `"TOKEN_OPTIMIZER_BASH_COMPRESS": "0"` no bloco `env` do
-`~/.claude/settings.json`.
+`~/.claude/settings.json`. Vale nos dois lados, sem depender do shell.
 
 No Grok não invente um segundo rewriter no mesmo `PreToolUse`.
 
@@ -50,7 +52,7 @@ no upstream lido. ⚪ não usado nesta máquina.
 
 | | Claude Code | Cursor | Codex | Grok Build | opencode 2.x |
 |---|---|---|---|---|---|
-| Proxy do Caveman (`input`) | 🟢 só no WSL | ⚪ | ⚪ | ⚪ | ⚪ |
+| Proxy do Caveman (`input`) | 🟢 WSL e Windows | ⚪ | ⚪ | ⚪ | ⚪ |
 | Context Mode | 🟢 plugin | 🟢 hook JSON | 🟢 hook JSON | 🟡 só MCP | 🟡 só MCP (plugin 1.0.169 é formato 1.x) |
 | code-review-graph 2.3.9 | 🟢 `--platform claude-code` | 🟢 `--platform cursor` | 🟢 `--platform codex` | 🟡 sem flag; `.mcp.json` | 🟢 `--platform opencode` |
 | Caveman (voz) | 🟢 plugin | 🟢 hook `sessionStart` | 🟢 `$caveman` | 🟡 skills em `~/.grok/skills`; upstream não cita o nome | 🟢 plugin `./plugins/caveman` |
@@ -143,7 +145,7 @@ README fala em ~60%.
 ## Caveman
 
 Voz: plugin no Claude, skill ou plugin nos outros agentes. Proxy: só o módulo
-`input`, só no Claude do WSL (veja o topo).
+`input`, só no Claude, no WSL e no Windows (veja o topo).
 
 Nesta máquina o instalador amplo do Caveman 4.0.1 já deixou a voz no Cursor
 (hook `sessionStart`), no opencode (`./plugins/caveman`) e no Grok (skills em
@@ -304,7 +306,7 @@ Conferido em 2026-10-17.
 | RTK | não usado (o proxy do Caveman ocupa a faixa) | v1.0.1 (2026-10-14) |
 | code-review-graph | 2.3.9 via pipx, no Linux e no Windows | v2.3.9 (2026-09-18) |
 | Context Mode | 1.0.169: plugin no Claude do WSL e do Windows, bin global `context-mode` nos dois lados | 1.0.169 (npm) |
-| Caveman | 4.0.1: plugin no Claude, CLI e proxy `input` no WSL, hook no Cursor dos dois lados, plugin no opencode, skills no Grok | v4.0.1 (2026-10-13) |
+| Caveman | 4.0.1: plugin no Claude, CLI e proxy `input` no Claude do WSL e do Windows, hook no Cursor dos dois lados, plugin no opencode, skills no Grok | v4.0.1 (2026-10-13) |
 | Token Optimizer | plugin Claude 5.13.49; adapter do Grok não instalado | v5.13.49 (2026-10-16) |
 | Grok Build | 1.0.62, compat do Claude desligado | — |
 | opencode | 2.0.32 | — |
@@ -458,7 +460,7 @@ Os números percentuais dos upstreams são deles, não medições deste guia.
 ## Grok, Cursor e opencode nesta máquina
 
 O instalador amplo do Caveman já deixou a voz nos três. O proxy (`input`) fica
-só no Claude do WSL. O `caveman status` sugere `caveman enable opencode`: não
+só no Claude (WSL e Windows). O `caveman status` sugere `caveman enable opencode`: não
 rode.
 
 | Agente | Já instalado | Recomendado | Evitar |
@@ -577,8 +579,18 @@ arquivos pode apontar para `/home/...`.
 
 Os plugins são por casa. No Claude do Windows, rode os mesmos comandos de
 `setup/01` e `setup/02` (`/plugin marketplace add ...`, `/plugin install ...`).
-O modo padrão do Caveman fica em `%APPDATA%\caveman\config.json`, com
-`{"defaultMode": "caveman"}`. O proxy `input` fica só no Claude do WSL.
+Ferramentas pelo Scoop (`setup/01`, seção "Windows: Scoop primeiro").
+
+| Item | Windows |
+|---|---|
+| Modo padrão do Caveman | `%APPDATA%\caveman\config.json`, com `{"defaultMode": "caveman"}` |
+| Proxy `input` | `setup/01`, bloco PowerShell. Binários em `~\.caveman\bin`; o hook `SessionStart` sobe o proxy |
+| Statusline | `~\.claude\statusline-combo.ps1` (`setup/02`) |
+| Bash do Claude | Git Bash do Scoop, em `CLAUDE_CODE_GIT_BASH_PATH` no `env` do settings |
+| Variáveis de ambiente | bloco `env` do `settings.json`, não `export` |
+
+O `caveman status` sugere `caveman enable opencode`: não rode. O proxy fica só
+no Claude.
 
 ### PATH duplicado no `~/.bashrc`
 

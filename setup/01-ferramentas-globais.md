@@ -4,6 +4,25 @@ Instale uma vez. Ficam disponíveis em todos os projetos.
 
 ---
 
+## Windows: Scoop primeiro
+
+No Windows, tudo deste guia vem pelo Scoop. Instale no PowerShell, sem admin:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+```
+
+Depois, o Git (traz o Git Bash, que a ferramenta Bash do Claude usa) e o
+Claude Code:
+
+```powershell
+scoop install git claude-code
+claude --version
+```
+
+---
+
 ## Node e pnpm
 
 Node 22.13 ou mais novo (o proxy do Caveman exige; os hooks dos plugins
@@ -22,6 +41,15 @@ node -v && pnpm -v
 ```
 
 Node 25 em diante não traz o corepack. Nesse caso: `npm install -g corepack`.
+
+Windows (PowerShell + Scoop). O Scoop instala o pnpm direto, sem corepack:
+```powershell
+scoop install nodejs pnpm
+node -v; pnpm -v
+```
+
+O `npm install -g` do Node do Scoop grava em
+`~\scoop\persist\nodejs\bin`, que fica no PATH.
 
 ---
 
@@ -59,9 +87,11 @@ Para fixar o modo em todas as sessões, crie `~/.config/caveman/config.json`
 ### Proxy do Caveman, só o módulo `input` (opcional)
 
 Comprime o que o agente lê (logs, testes, JSON). Precisa do Node 22.13+.
-Só no Claude do WSL. Não ligue no Claude do Windows nem em outro agente.
+Só no Claude, no WSL e no Windows. Os binários vêm prontos para Linux, macOS e
+Windows (amd64 e arm64). Não ligue em outro agente.
 
-RTK não é usado: o proxy do Caveman (`input`) comprime a mesma saída.
+RTK não é usado: o proxy do Caveman (`input`) comprime a mesma saída. RTK é
+fallback só se o proxy não rodar na máquina.
 
 ```bash
 npm install -g @caveman-ai/cli
@@ -76,10 +106,33 @@ Faça backup de `~/.claude/settings.json` e `~/.claude.json` antes. Se o proxy
 estiver parado, o Claude Code não conecta: `caveman status` e `caveman doctor`.
 Vale só na sessão seguinte.
 
+Windows (PowerShell). Os mesmos comandos, com backup antes:
+```powershell
+Copy-Item "$env:USERPROFILE\.claude\settings.json", "$env:USERPROFILE\.claude.json" "$env:USERPROFILE\Desktop\"
+npm install -g @caveman-ai/cli
+caveman telemetry off
+caveman setup --dry-run --only input --agents claude
+caveman setup --yes --only input --agents claude
+```
+
+Se o setup acusar `caveman-mcp pre-versioned lacks current mcp_recovery
+capability`, rode `caveman setup --install` e repita o `--yes`. O `--install`
+também baixa o `caveman-browse` (~34 MB).
+
+No Windows, os binários ficam em `~\.caveman\bin`. Não há serviço nem tarefa
+agendada: o hook `SessionStart` do Claude sobe o `caveman-proxy`. Para ver se
+está no ar:
+```powershell
+Get-NetTCPConnection -LocalPort 8787 -State Listen
+```
+
 Verificar:
 ```bash
 caveman status
+caveman doctor
 ```
+
+`claude` em `input` deve mostrar `wired`, e o doctor, `healthy`.
 
 ---
 
@@ -106,7 +159,15 @@ pipx install code-review-graph
 Sem a senha, pelo PowerShell: `wsl -u root -- apt install -y python3-pip python3-venv pipx jq`.
 O `jq` é usado nas verificações do `setup/07-estilo-codigo.md`.
 
-No Windows, com Scoop: `scoop install python pipx`, e então `pipx install code-review-graph`.
+Windows (PowerShell + Scoop):
+```powershell
+scoop install python pipx jq
+pipx ensurepath
+pipx install code-review-graph
+```
+
+O `pipx` instala em `~\.local\bin`. Abra um terminal novo depois do
+`ensurepath`.
 
 WSL: o PATH inclui as pastas do Windows (`/mnt/c/...`) no fim. Se o Linux ainda
 não tem `pipx`, o shell cai no `pipx` do Windows e instala lá, não no Linux.
@@ -128,6 +189,12 @@ code-review-graph --version
 ```bash
 caveman status
 code-review-graph --version && echo "CRG ok"
+```
+
+Windows (PowerShell):
+```powershell
+caveman status
+code-review-graph --version; if ($?) { "CRG ok" }
 ```
 
 `caveman status` só se instalou o proxy.

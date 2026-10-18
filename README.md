@@ -30,7 +30,7 @@ README.md
 AGENTS.md                    ← regras curtas para Grok, Codex e Cursor
 setup/
   00-checklist.md            ← ponto de entrada — checklist que o Claude segue
-  01-ferramentas-globais.md  ← Node + Caveman (plugin e proxy `input`) + code-review-graph
+  01-ferramentas-globais.md  ← Scoop (Windows) + Node + Caveman (plugin e proxy `input`) + code-review-graph + jq/pipx
   02-plugins-claude.md       ← Token Optimizer + Context Mode
   03-projeto.md              ← configurar MCP e grafo por projeto
   04-sessao.md               ← sequência de abertura e comandos de controle
@@ -40,7 +40,6 @@ setup/
   08-multi-agente.md         ← quem cobre o quê em Cursor, Codex e Grok; como medir e desativar o que quebrar
 templates/
   CLAUDE.md                  ← template base para qualquer projeto
-  .gitignore-additions       ← entradas para adicionar ao .gitignore
 ```
 
 ---
@@ -50,12 +49,13 @@ templates/
 | Ferramenta | O que faz | Redução típica |
 |---|---|---|
 | **Caveman** | Encurta respostas do Claude | ~8,5% output medido pela JetBrains; o upstream anuncia mais |
-| **Proxy do Caveman** (`input`, opcional, só no Claude do WSL) | Comprime o que o agente lê (logs, testes, JSON) | ~33% do input em arquivos de teste, segundo o upstream |
+| **Proxy do Caveman** (`input`, opcional, só no Claude, no WSL e no Windows) | Comprime o que o agente lê (logs, testes, JSON) | ~33% do input em arquivos de teste, segundo o upstream |
 | **code-review-graph** | Lê só arquivos relevantes via grafo AST | ~82x por consulta |
 | **Context Mode** | Sandbox para dados brutos — APIs, logs, snapshots | 94–99% por chamada |
 | **Token Optimizer** | Audit estrutural + compactação com checkpoint | até 80%+ sessão |
 
-RTK não é usado: o proxy do Caveman (`input`) comprime a mesma saída.
+RTK não é usado: o proxy do Caveman (`input`) comprime a mesma saída. RTK é
+fallback só se o proxy não rodar na máquina.
 
 Sessão de 2h que custaria ~$12 → ~$2–3 com o stack completo no Claude.
 Nos outros agentes a cobertura é a da matriz em `setup/08-multi-agente.md`.
@@ -100,10 +100,24 @@ O arquivo `setup/06-higiene-contexto.md` cobre:
 
 ## Requisitos
 
+Unix (Linux, macOS, WSL):
+
 - Node.js ≥ 22.13 (nvm) e pnpm via corepack
-- Python 3.x + pipx
-- Claude Code CLI ≥ v1.0.86
-- `jq` (verificações do `setup/07-estilo-codigo.md`)
+- Python 3.10+ + pipx
+- Claude Code CLI ≥ v2.0.0
+- `jq` (verificações do `setup/00-checklist.md` e do `setup/07-estilo-codigo.md`)
+
+Windows (PowerShell 5.1+), tudo pelo [Scoop](https://scoop.sh):
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+scoop install git claude-code nodejs pnpm python pipx jq
+```
+
+- `git` traz o Git Bash, que a ferramenta Bash do Claude usa.
+- O Node do Scoop é 25+, sem corepack: o pnpm vem direto do Scoop.
+- Comandos de cada passo: blocos `powershell` logo abaixo dos blocos `bash`.
 
 ---
 
