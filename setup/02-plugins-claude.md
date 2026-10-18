@@ -218,8 +218,11 @@ cmd /c "echo {} | powershell -NoProfile -ExecutionPolicy Bypass -File %USERPROFI
 No `~\.claude\settings.json` (backup antes; troque `<você>`):
 
 ```json
-"statusLine": { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\<você>\\.claude\\statusline-combo.ps1" }
+"statusLine": { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:/Users/<você>/.claude/statusline-combo.ps1" }
 ```
+
+Use `/` no caminho. O Claude do Windows roda o `statusLine` pelo Git Bash, que
+come as `\` sem aspas: `C:\Users\...` vira `C:Users...` e a barra fica vazia.
 
 Cada execução leva ~0,6 s (dois processos novos).
 
