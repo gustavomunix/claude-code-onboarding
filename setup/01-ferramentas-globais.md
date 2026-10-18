@@ -48,8 +48,9 @@ scoop install nodejs pnpm
 node -v; pnpm -v
 ```
 
-O `npm install -g` do Node do Scoop grava em
-`~\scoop\persist\nodejs\bin`, que fica no PATH.
+O `npm install -g` do Node do Scoop grava em `~\scoop\persist\nodejs\bin`. O
+PATH a expõe por `~\scoop\apps\nodejs\current\bin`, uma junction para essa
+pasta.
 
 ---
 
@@ -87,8 +88,8 @@ Para fixar o modo em todas as sessões, crie `~/.config/caveman/config.json`
 ### Proxy do Caveman, só o módulo `input` (opcional)
 
 Comprime o que o agente lê (logs, testes, JSON). Precisa do Node 22.13+.
-Só no Claude, no WSL e no Windows. Os binários vêm prontos para Linux, macOS e
-Windows (amd64 e arm64). Não ligue em outro agente.
+Só no Claude: Linux, macOS, WSL ou Windows. Os binários vêm prontos para
+Linux, macOS e Windows (amd64 e arm64). Não ligue em outro agente.
 
 RTK não é usado: o proxy do Caveman (`input`) comprime a mesma saída. RTK é
 fallback só se o proxy não rodar na máquina.
@@ -120,10 +121,13 @@ capability`, rode `caveman setup --install` e repita o `--yes`. O `--install`
 também baixa o `caveman-browse` (~34 MB).
 
 No Windows, os binários ficam em `~\.caveman\bin`. Não há serviço nem tarefa
-agendada: o hook `SessionStart` do Claude sobe o `caveman-proxy`. Para ver se
-está no ar:
+agendada: o hook `SessionStart` do Claude sobe o `caveman-proxy`. Ele só roda
+depois que o Claude aprovou os hooks novos. Na primeira sessão depois do setup,
+aprove-os quando o Claude pedir. Se o Claude não conectar, rode
+`caveman setup --yes --only input --agents claude` de novo: ele sobe o proxy.
+Para ver se está no ar:
 ```powershell
-Get-NetTCPConnection -LocalPort 8787 -State Listen
+if (Get-NetTCPConnection -LocalPort 8787 -State Listen -ErrorAction SilentlyContinue) { "proxy no ar" } else { "proxy parado" }
 ```
 
 Verificar:
@@ -138,7 +142,7 @@ caveman doctor
 
 ## code-review-graph
 
-Constrói um mapa estrutural do código (AST + dependências). O Claude consulta o grafo e lê só os arquivos relevantes. Redução: de 951K tokens para ~2K por consulta em projetos grandes.
+Constrói um mapa estrutural do código (AST + dependências). O Claude consulta o grafo e lê só os arquivos relevantes. O upstream anuncia redução de 951K tokens para ~2K por consulta em projetos grandes.
 
 Prefira o `pipx` (instalação isolada):
 
@@ -151,12 +155,13 @@ vir sem `pip`, `venv` e `pipx`. Instale antes (pede `sudo`, num terminal com TTY
 o `!` do Claude Code não serve):
 
 ```bash
+sudo apt update
 sudo apt install -y python3-pip python3-venv pipx
 sudo apt install -y jq
 pipx install code-review-graph
 ```
 
-Sem a senha, pelo PowerShell: `wsl -u root -- apt install -y python3-pip python3-venv pipx jq`.
+Sem a senha, pelo PowerShell: `wsl -u root -- sh -c "apt update; apt install -y python3-pip python3-venv pipx jq"`.
 O `jq` é usado nas verificações do `setup/07-estilo-codigo.md`.
 
 Windows (PowerShell + Scoop):

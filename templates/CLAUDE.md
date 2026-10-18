@@ -34,12 +34,10 @@
 
 ## ▸ COMANDOS PRINCIPAIS
 
-```bash
-[dev]    # ex: pnpm dev
-[build]  # ex: pnpm build
-[test]   # ex: pnpm test
-[lint]   # ex: pnpm lint && pnpm tsc --noEmit
-```
+- Dev: `[ex: pnpm dev]`
+- Build: `[ex: pnpm build]`
+- Test: `[ex: pnpm test]`
+- Lint: `[ex: pnpm lint && pnpm tsc --noEmit]`
 
 ---
 
@@ -91,9 +89,8 @@ Check blast radius of [arquivo] before modifying
 ```
 
 **Context Mode** — para dados grandes (logs, APIs, snapshots) — nunca jogar bruto no contexto.
-Para arquivo, usar `ctx_execute_file` com `path` e `language: "python"`. O conteúdo chega como `FILE_CONTENT`:
+Para arquivo, usar `ctx_execute_file` com `path` e `language: "python"`. O conteúdo chega como `FILE_CONTENT`. Processar e imprimir só o que importa:
 ```python
-# processar e retornar só o que importa
 print(len(FILE_CONTENT.splitlines()))
 ```
 

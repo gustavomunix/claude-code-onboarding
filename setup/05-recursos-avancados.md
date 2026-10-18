@@ -17,8 +17,7 @@ Essencial para mudanças multi-arquivo ou quando você quer que Claude "pense an
 
 **O que muda no Plan Mode:**
 - Claude tem acesso apenas a ferramentas de leitura (Read, Glob, Grep, WebSearch, WebFetch, Agent)
-- Ferramentas de escrita ficam bloqueadas (Edit, Write, Bash, MCP que modifica estado)
-- Respostas são estruturadas, numeradas, com verbosidade consistente
+- Só ferramentas de leitura e comandos read-only; nenhuma edição (Edit, Write, Bash que muda estado, MCP que modifica estado)
 - Ao sair do Plan Mode, Claude pede confirmação adicional antes de executar
 
 **Opus Plan Mode:**

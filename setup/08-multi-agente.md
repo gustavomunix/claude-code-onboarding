@@ -145,7 +145,7 @@ README fala em ~60%.
 ## Caveman
 
 Voz: plugin no Claude, skill ou plugin nos outros agentes. Proxy: só o módulo
-`input`, só no Claude, no WSL e no Windows (veja o topo).
+`input`, só no Claude (Linux, macOS, WSL ou Windows; veja o topo).
 
 Nesta máquina o instalador amplo do Caveman 4.0.1 já deixou a voz no Cursor
 (hook `sessionStart`), no opencode (`./plugins/caveman`) e no Grok (skills em
@@ -306,10 +306,10 @@ Conferido em 2026-10-17.
 | RTK | não usado (o proxy do Caveman ocupa a faixa) | v1.0.1 (2026-10-14) |
 | code-review-graph | 2.3.9 via pipx, no Linux e no Windows | v2.3.9 (2026-09-18) |
 | Context Mode | 1.0.169: plugin no Claude do WSL e do Windows, bin global `context-mode` nos dois lados | 1.0.169 (npm) |
-| Caveman | 4.0.1: plugin no Claude, CLI e proxy `input` no Claude do WSL e do Windows, hook no Cursor dos dois lados, plugin no opencode, skills no Grok | v4.0.1 (2026-10-13) |
+| Caveman | 4.0.1: plugin no Claude, CLI e proxy `input` no Claude do WSL e do Windows, hook no Cursor, plugin no opencode e skills no Grok, nos dois lados | v4.0.1 (2026-10-13) |
 | Token Optimizer | plugin Claude 5.13.49; adapter do Grok não instalado | v5.13.49 (2026-10-16) |
-| Grok Build | 1.0.62, compat do Claude desligado | — |
-| opencode | 2.0.32 | — |
+| Grok Build | 1.0.62 nos dois lados (Windows: `scoop install grok-cli`), compat do Claude desligado | — |
+| opencode | 2.0.32 nos dois lados (Windows: `scoop install versions/opencode2`) | — |
 | Cursor CLI | `cursor-agent` 2026.10.16 Linux em `~/.local/bin`; Windows pelo Scoop | — |
 | npm | 12 no WSL, 11 no Windows | — |
 
@@ -465,9 +465,9 @@ rode.
 
 | Agente | Já instalado | Recomendado | Evitar |
 |---|---|---|---|
-| Grok 1.0.62 | Caveman: skills em `~/.grok/skills/` e bloco no `~/.grok/AGENTS.md`. MCP `context-mode` no `config.toml`. Regra `~/.grok/rules/estilo-codigo.md`. Compat do Claude desligado. Adapter do Token Optimizer: não. | Grafo via `.mcp.json`, conferido no `grok inspect`. | Proxy. Religar o compat do Claude. Usar o Token Optimizer sem o `grok-doctor --probe` passar. |
+| Grok 1.0.62 (WSL e Windows) | Caveman: skills em `~/.grok/skills/` e bloco no `~/.grok/AGENTS.md`. MCP `context-mode` no `config.toml`. Regra `~/.grok/rules/estilo-codigo.md`. Compat do Claude desligado. Adapter do Token Optimizer: não. | Grafo via `.mcp.json`, conferido no `grok inspect`. | Proxy. Religar o compat do Claude. Usar o Token Optimizer sem o `grok-doctor --probe` passar. |
 | Cursor (`cursor-agent`) | Caveman (hook `sessionStart`) e Context Mode (hooks + MCP), no WSL e no Windows. Ver "Windows e WSL" abaixo. | Grafo: `code-review-graph install --platform cursor --no-hooks --no-instructions`, por projeto. | Proxy. RTK. |
-| opencode 2.0.32 | Caveman: plugin `./plugins/caveman` (`server.js`, formato 2.x) na chave `plugins`. Context Mode só MCP (`mcp.servers.context-mode`; o log mostra `tools=11`). `instructions` com `estilo-codigo.md`. | Manter. Voltar ao plugin do Context Mode quando sair a versão para a 2.x. | `caveman enable opencode`: o proxy fica só no Claude. |
+| opencode 2.0.32 (WSL e Windows) | Caveman: plugin `./plugins/caveman` (`server.js`, formato 2.x) na chave `plugins`. Context Mode só MCP (`mcp.servers.context-mode`; o log mostra `tools=11`). `instructions` com `estilo-codigo.md`. | Manter. Voltar ao plugin do Context Mode quando sair a versão para a 2.x. | `caveman enable opencode`: o proxy fica só no Claude. |
 
 Regras que valem para os três:
 
@@ -518,12 +518,14 @@ MCP. Reinicie o agente depois de editar.
 
 ## Windows e WSL: cada um no seu quadrado
 
-Claude Code e Cursor têm uma casa em cada lado. Nenhum lê a config do outro.
+Cada agente tem uma casa em cada lado. Nenhum lê a config do outro.
 
 | Agente | WSL | Windows |
 |---|---|---|
 | Claude Code | `~/.claude` | `C:\Users\<você>\.claude` |
 | Cursor | `~/.cursor` | `C:\Users\<você>\.cursor` |
+| Grok | `~/.grok` | `C:\Users\<você>\.grok` |
+| opencode | `~/.config/opencode` | `C:\Users\<você>\.config\opencode` (confira com `opencode debug paths`) |
 | Caveman (modo padrão) | `~/.config/caveman/config.json` | `%APPDATA%\caveman\config.json` |
 
 ### Armadilha do shim do Scoop
@@ -574,6 +576,168 @@ do Windows. Depois, mescle no `hooks.json` os hooks do Context Mode
 (`preToolUse`, `postToolUse`, `stop`, os mesmos do WSL) e crie o `mcp.json`
 com `"context-mode": {"command": "context-mode"}`. Nenhum caminho desses
 arquivos pode apontar para `/home/...`.
+
+### Grok no Windows
+
+O Grok do Windows também importa o `~\.claude`. Grave o `config.toml` antes de
+abrir o Grok pela primeira vez. Em `C:\Users\<você>\.grok\config.toml`, o mesmo
+bloco do WSL:
+
+```toml
+[mcp_servers.context-mode]
+command = "context-mode"
+args = []
+enabled = true
+
+[compat.claude]
+skills = false
+rules = false
+agents = false
+mcps = false
+hooks = false
+
+[plugins]
+disabled = ["caveman", "token-optimizer", "context-mode"]
+```
+
+Depois, no PowerShell:
+
+O Grok certo é o `grok-cli` do bucket `main` (`scoop install grok-cli`). O
+`grok-bot` do `extras` é outro app; o shim `grok` deve apontar para o
+`grok-cli` (`grok --version` = 1.0.62).
+
+Depois, no PowerShell:
+
+```powershell
+npm install -g context-mode
+npx -y github:JuliusBrussee/caveman#v4.0.1 -- --only grok
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.grok\rules"
+```
+
+O `--only grok` é id do instalador 4.0.1: grava as skills em `~\.grok\skills` e
+o bloco do Caveman no `~\.grok\AGENTS.md`. No WSL desta máquina o Caveman veio
+do `install.sh` amplo, sem `--only`. Não repita isso: ele instala em todos os
+agentes.
+
+Copie o `estilo-codigo.md` (`setup/07`) para `~\.grok\rules\`. Se o WSL já tem
+o Grok configurado, dá para copiar de lá, usando o manifesto do instalador
+como lista. Assim não roda código baixado. Troque `Ubuntu` pelo nome da sua
+distro (`wsl -l`):
+
+```powershell
+$src = "\\wsl.localhost\Ubuntu\home\<usuário>\.grok"
+$dst = "$env:USERPROFILE\.grok"
+$own = Get-Content "$src\.caveman-skills-grok-ownership.json" -Raw | ConvertFrom-Json
+foreach ($e in $own.entries.PSObject.Properties.Name) {
+    $t = Join-Path $dst ($e -replace '/', '\')
+    New-Item -ItemType Directory -Force (Split-Path $t) | Out-Null
+    Copy-Item "$src\$e" (Split-Path $t) -Recurse -Force
+}
+Copy-Item "$src\.caveman-skills-grok-ownership.json", "$src\AGENTS.md" $dst
+Copy-Item "$src\rules\estilo-codigo.md" "$dst\rules\"
+```
+
+O `AGENTS.md` do WSL só tem o bloco do Caveman. Se o do Windows já existir,
+mescle em vez de sobrescrever.
+
+**Diferença do Windows (Grok 1.0.62):** o `[compat.claude] hooks = false` não
+pega os hooks do `~\.claude\settings.json`.
+
+- No WSL, o compat resolve sozinho. O `grok inspect --json` marca cada hook do
+  Claude com `vendor=claude` e `compatibilityStatus=disabled`, e o texto
+  mostra `user [claude] [disabled]`. Não há `~/.grok/disabled-hooks`.
+- No Windows, os mesmos hooks saem só como `user`, sem `vendor` nem
+  `compatibilityStatus`. O Grok os roda. Com o proxy do Caveman no Claude, isso
+  inclui o `caveman-proxy native-hook claude` e o `caveman shrink-hook`.
+
+No Windows, desligue cada um no TUI: `/hooks`, selecione, Space. Confira depois
+qual arquivo o Grok gravou: a doc dele cita `~/.grok/disabled-hooks`, mas isso
+não foi confirmado aqui. Os hooks dos plugins `token-optimizer` e
+`context-mode` seguem a mesma pendência do WSL (seção "Grok e o compat do
+Claude").
+
+Confira:
+
+```powershell
+grok inspect
+```
+
+O que esperar:
+
+- `Config Sources`: `User: C:\Users\<você>\.grok\config.toml`
+- `MCP Servers`: `context-mode (stdio) config` e
+  `caveman (stdio) ~/.claude.json [claude] [disabled]`
+- `Harness Compatibility` → `claude`: tudo `OFF (config)`, menos `sessions`
+- `Hooks`: depois do `/hooks`, nenhum `command user` vindo do Claude ativo
+- `Plugins (3)`: `caveman`, `token-optimizer` e `context-mode` ainda como
+  `(user, enabled)`, apesar do `[plugins] disabled`. É a pendência do WSL.
+- `Hook Load Errors`: 4 erros do `~\.cursor\hooks.json`. Esperado: o Grok ainda
+  não lê resposta de hook do Cursor.
+
+### opencode no Windows
+
+Use a 2.x, a mesma do WSL. O `opencode` do bucket `main` é 1.x. O Scoop avisa
+que a config da 2.x é incompatível com a da 1.x: desinstale a 1.x antes. Guia
+de migração: <https://opencode.ai/v2/docs/migrate-v1>.
+
+```powershell
+scoop uninstall opencode
+scoop install versions/opencode2
+opencode --version
+```
+
+O plugin, os comandos, os agentes e as skills do Caveman vão para
+`~\.config\opencode`. O instalador 4.0.1 tem o id `--only opencode`, mas exige
+um clone local do repo do Caveman
+(`git clone https://github.com/JuliusBrussee/caveman` e
+`node installer/install.js --only opencode`). Ele grava o plugin na chave
+`plugin`, formato 1.x. Na 2.x, mova para `plugins`, como foi feito no WSL. Ou
+copie do WSL pelo manifesto, como no Grok (troque `Ubuntu` pela sua distro):
+
+```powershell
+$src = "\\wsl.localhost\Ubuntu\home\<usuário>\.config\opencode"
+$dst = "$env:USERPROFILE\.config\opencode"
+$own = Get-Content "$src\.caveman-opencode-ownership.json" -Raw | ConvertFrom-Json
+foreach ($e in $own.entries.PSObject.Properties.Name) {
+    $t = Join-Path $dst ($e -replace '/', '\')
+    New-Item -ItemType Directory -Force (Split-Path $t) | Out-Null
+    Copy-Item "$src\$e" (Split-Path $t) -Recurse -Force
+}
+Copy-Item "$src\.caveman-opencode-ownership.json", "$src\AGENTS.md", "$src\estilo-codigo.md" $dst
+```
+
+O plugin não tem caminho do Linux fixo. Em `~\.config\opencode\opencode.json`,
+mantenha o que já estiver lá (como o plugin do OpenChamber) e acrescente o
+seguinte. O caminho de `instructions` é o do Windows, com `/`:
+
+```json
+{
+  "plugins": ["./plugins/caveman"],
+  "instructions": ["C:/Users/<você>/.config/opencode/estilo-codigo.md"],
+  "mcp": {
+    "servers": {
+      "context-mode": { "type": "local", "command": ["context-mode"] }
+    }
+  }
+}
+```
+
+Confira:
+
+```powershell
+opencode debug config
+opencode mcp list
+```
+
+Abra uma sessão e procure no log
+(`~\.local\share\opencode\log\opencode.log`) por `loading plugin`, com um `id`
+terminado em `plugins\\caveman`, e por `mcp connected` com
+`server=context-mode tools=11`:
+
+```powershell
+Select-String -Path "$env:USERPROFILE\.local\share\opencode\log\opencode.log" -Pattern 'loading plugin.*caveman', 'mcp connected.*tools=11' | Select-Object -Last 4
+``` Não rode
+`caveman enable opencode`: o proxy fica só no Claude.
 
 ### Claude Code no Windows
 

@@ -95,6 +95,9 @@ crg-daemon start
 crg-daemon status
 ```
 
+No Windows, o `crg-daemon.exe` existe em `~\.local\bin` e aceita os mesmos
+subcomandos, mas o `start` não foi testado. Na dúvida, use a Opção A.
+
 **Opção C — atualizar manualmente** (basta dizer no chat):
 ```
 Update the code review graph
@@ -162,5 +165,5 @@ grep ".code-review-graph" .gitignore && echo "ok" || echo "adicionar manualmente
 
 Windows (PowerShell):
 ```powershell
-if (Select-String -Path .gitignore -Pattern '\.code-review-graph' -Quiet) { "ok" } else { "adicionar manualmente" }
+if ((Test-Path .gitignore) -and (Select-String -Path .gitignore -Pattern '\.code-review-graph' -Quiet)) { "ok" } else { "adicionar manualmente" }
 ```

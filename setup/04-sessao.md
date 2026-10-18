@@ -2,7 +2,7 @@
 
 Referência de comandos para cada momento da sessão no Claude Code.
 Os slash commands abaixo são dos plugins do Claude Code.
-A abertura de Cursor, Codex e Grok está em `setup/08-multi-agente.md`.
+A abertura de Cursor, Codex, Grok e opencode está em `setup/08-multi-agente.md`.
 
 ---
 
@@ -13,7 +13,7 @@ de comando. Se você desligou, reative:
 ```
 /caveman
 ```
-Outros modos: `/ultracave` e `/megacave`. Desligar: `/caveman off`.
+Outros modos: `/ultracave` e `/megacave`. Desligar: `stop caveman` ou `normal mode`.
 
 ```
 /token-optimizer:quick

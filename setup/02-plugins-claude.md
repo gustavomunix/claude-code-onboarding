@@ -108,7 +108,7 @@ python3 "$M" doctor
 
 Windows (PowerShell):
 ```powershell
-$v = Get-ChildItem "$env:USERPROFILE\.claude\plugins\cache\alexgreensh-token-optimizer\token-optimizer" -Directory | Sort-Object { [version]$_.Name } | Select-Object -Last 1
+$v = Get-ChildItem "$env:USERPROFILE\.claude\plugins\cache\alexgreensh-token-optimizer\token-optimizer" -Directory | Sort-Object { try { [version]$_.Name } catch { [version]'0.0' } } | Select-Object -Last 1
 $M = Join-Path $v.FullName 'skills\token-optimizer\scripts\measure.py'
 python $M doctor
 ```
@@ -233,7 +233,7 @@ PATH. Com nvm, abra o Claude num terminal que carregue o `~/.bashrc`. Se o
 launcher não carrega o shell (atalho, IDE), crie um symlink em `~/.local/bin`:
 
 ```bash
-ln -s ~/.nvm/versions/node/v24.22.0/bin/node ~/.local/bin/node
+ln -sf "$(. ~/.nvm/nvm.sh && nvm which default)" ~/.local/bin/node
 ```
 
 Trocou a versão do Node? Refaça o symlink.

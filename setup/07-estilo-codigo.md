@@ -10,20 +10,25 @@ O mesmo texto (seção "Bloquear comentários novos") vai em cada agente:
 | Claude Code (WSL) | `~/.claude/CLAUDE.md` | Sim, em `~/.claude/settings.json` |
 | Claude Code (Windows) | `C:\Users\<você>\.claude\CLAUDE.md` | Sim, em `C:\Users\<você>\.claude\settings.json` |
 | Grok | `~/.grok/rules/estilo-codigo.md` | Não: o Grok não tem hook do tipo `prompt` |
-| opencode | `~/.config/opencode/estilo-codigo.md`, listado no campo `instructions` do `~/.config/opencode/opencode.jsonc` | Não |
+| opencode | `~/.config/opencode/estilo-codigo.md`, listado no campo `instructions` do `opencode.jsonc` (WSL) ou `opencode.json` (Windows) | Não |
 | Cursor | Interface: Cursor Settings → Rules → User Rules. Colar o texto | Não (sem hook do tipo `prompt`) |
 | Zed | Interface: Rules Library. Colar o texto como regra padrão | Não |
 
-A linha do opencode vale para o WSL. No Windows, não foi aplicada: o
-`C:\Users\<você>\.config\opencode\opencode.json` existe sem o campo
-`instructions`.
-
 No opencode, não use o `~/.config/opencode/AGENTS.md`: o Caveman gerencia
-esse arquivo. O campo `instructions` aceita uma lista de caminhos:
+esse arquivo. O campo `instructions` aceita uma lista de caminhos absolutos.
+No WSL/Linux:
 
 ```jsonc
 "instructions": [
   "/home/<você>/.config/opencode/estilo-codigo.md"
+]
+```
+
+No Windows, o caminho do Windows com `/`:
+
+```json
+"instructions": [
+  "C:/Users/<você>/.config/opencode/estilo-codigo.md"
 ]
 ```
 
@@ -110,10 +115,13 @@ No Windows (PowerShell):
 ```powershell
 $s = Get-Content $env:USERPROFILE\.claude\settings.json -Raw | ConvertFrom-Json
 $s.attribution
-$s.hooks.PreToolUse | Where-Object matcher -eq 'Write|Edit'
+$s.hooks.PreToolUse | Where-Object matcher -eq 'Write|Edit' | ConvertTo-Json -Depth 5
+Test-Path "$env:USERPROFILE\.grok\rules\estilo-codigo.md"
+Select-String -Path "$env:USERPROFILE\.config\opencode\opencode.json" -Pattern '"instructions"' -Context 0, 2
 ```
 
 Cursor e Zed: abra a tela de regras e confira se o texto está lá.
 
-Mudanças em `~/.claude/settings.json` só carregam em uma nova sessão —
-reiniciar o Claude Code (ou `/hooks` para forçar reload) depois de editar.
+Depois de editar o `~/.claude/settings.json`, reinicie o Claude Code. É o
+caminho garantido para os hooks novos valerem. Hook novo pode pedir revisão no
+`/hooks` antes de rodar.
